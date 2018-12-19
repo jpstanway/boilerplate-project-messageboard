@@ -31,6 +31,18 @@ const Thread = mongoose.model('Thread', threadSchema, 'boards');
 module.exports = function (app) {
   
   app.route('/api/threads/:board')
+    .get((req, res) => {
+      const board = req.params.board;
+      
+      Thread.find({}, {replies: {$slice: 3}, reported: 0, delete_password: 0})
+            .sort({bumped_on: 'desc'})
+            .limit(10)
+            .exec((err, data) => {
+              if (err) res.send('Failed to retrieve thread');
+
+              res.json(data);
+            });
+    })
     .post((req, res) => {
       const board = req.params.board;
       const text = req.body.text;
@@ -64,5 +76,4 @@ module.exports = function (app) {
         }
       );
     });
-
 };
