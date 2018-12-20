@@ -24,9 +24,18 @@ const threadSchema = new Schema({
   bumped_on: {type: Date, default: Date.now},
   reported: {type: Boolean, default: false},
   delete_password: String,
-  replies: [String]
+  replies: [Object]
 });
 const Thread = mongoose.model('Thread', threadSchema, 'boards');
+
+// new reply schema and model
+const replySchema = new Schema({
+  text: String,
+  created_on: {type: Date, default: Date.now},
+  delete_password: String,
+  reported: {type: Boolean, default: false}
+});
+const Reply = mongoose.model('Reply', replySchema);
 
 module.exports = function (app) {
   
@@ -36,7 +45,7 @@ module.exports = function (app) {
             .sort({bumped_on: 'desc'})
             .limit(10)
             .exec((err, data) => {
-              if (err) res.send('Failed to retrieve thread');
+              if (err) return res.send('Failed to retrieve thread');
 
               res.json(data);
             });
@@ -47,7 +56,7 @@ module.exports = function (app) {
       const password = req.body.delete_password;
 
       Thread.create({text: text, delete_password: password}, (err, data) => {
-        if (err) res.send('Failed to save to database');
+        if (err) return res.send('Failed to save to database');
 
         res.redirect(`/b/${board}`);
       });
@@ -61,7 +70,7 @@ module.exports = function (app) {
         
         if (password === thread.delete_password) {
           Thread.deleteOne({_id: ObjectId(threadId)}, (err, result) => {
-            if (err) res.send('Error when deleting');
+            if (err) return res.send('Error when deleting');
 
             res.json('success');
           });
@@ -77,7 +86,7 @@ module.exports = function (app) {
       const threadId = req.query.thread_id;
       
       Thread.find({_id: ObjectId(threadId)}, '-reported -delete_password', (err, data) => {
-        if (err) res.send('Failed to retrieve thread results');
+        if (err) return res.send('Failed to retrieve thread results');
 
         res.json(data);
       });
@@ -88,18 +97,46 @@ module.exports = function (app) {
       const text = req.body.text;
       const password = req.body.delete_password;
 
+      // create new reply
+      const reply = new Reply({
+        text: text,
+        delete_password: password
+      });
+
       Thread.updateOne(
         {_id: ObjectId(threadId)},
         {
           bumped_on: new Date(),
-          delete_password: password,
-          $push: {replies: text}
+          $push: {replies: reply}
         },
         (err, data) => {
-          if (err) res.send('Failed to update thread');
+          if (err) return res.send('Failed to update thread');
 
           res.redirect(`/b/${board}/${threadId}`);
         }
       );
+    })
+    .delete((req, res) => {
+      const threadId = req.body.thread_id;
+      const replyId = req.body.reply_id;
+      const password = req.body.delete_password;
+
+      // first find the thread
+      Thread.findOneAndUpdate(
+        {
+          _id: ObjectId(threadId), 
+          replies: {$elemMatch: {_id: ObjectId(replyId), delete_password: password}}
+        }, 
+        {$set: {"replies.$.text": "[deleted]"}},
+        (err, reply) => {
+        if (err) {
+          return res.send('Error finding thread');
+        } else if (reply) {
+          res.json('success');
+        } else {
+          res.json('incorrect password');
+        }
+
+      });
     });
 };
