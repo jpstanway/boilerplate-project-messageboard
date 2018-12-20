@@ -51,6 +51,25 @@ module.exports = function (app) {
 
         res.redirect(`/b/${board}`);
       });
+    })
+    .delete((req, res) => {
+      const threadId = req.body.thread_id;
+      const password = req.body.delete_password;
+
+      // first find the thread in the db so passwords can be compared
+      Thread.findOne({_id: ObjectId(threadId)}, (err, thread) => {
+        
+        if (password === thread.delete_password) {
+          Thread.deleteOne({_id: ObjectId(threadId)}, (err, result) => {
+            if (err) res.send('Error when deleting');
+
+            res.json('success');
+          });
+        } else {
+          res.json('incorrect password');
+        }
+
+      });
     });
     
   app.route('/api/replies/:board')
