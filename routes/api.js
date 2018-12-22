@@ -37,6 +37,12 @@ const replySchema = new Schema({
 });
 const Reply = mongoose.model("Reply", replySchema);
 
+// check that id values are in correct hexadecimal format
+function hexTest(str) {
+  const hex = /[0-9A-Fa-f]{6}/g;
+  return hex.test(str);
+}
+
 module.exports = function(app) {
   app
     .route("/api/threads/:board")
@@ -57,15 +63,31 @@ module.exports = function(app) {
       const board = req.params.board;
       const text = req.body.text;
       const password = req.body.delete_password;
+      const id = req.body._id; // for tests only
 
-      Thread.create({ text: text, delete_password: password }, (err, data) => {
-        if (err) return res.send("Failed to save to database");
-
+      // search for duplicate thread
+      Thread.find({ text: text }, (err, data) => {
+        if (err) {
+          return res.send("Failed to search database");
+        } else if (data.length === 0) {
+          // create and save new thread if doesnt already exist
+          Thread.create(
+            { _id: id || ObjectId(), text: text, delete_password: password },
+            (err, data) => {
+              if (err)
+                return res.status(400).send("Failed to save to database");
+            }
+          );
+        }
         res.redirect(`/b/${board}`);
       });
     })
     .put((req, res) => {
       const threadId = req.body.thread_id;
+
+      if (!hexTest(threadId)) {
+        return res.send("incorrect id format");
+      }
 
       Thread.findOneAndUpdate(
         { _id: ObjectId(threadId) },
@@ -84,6 +106,10 @@ module.exports = function(app) {
     .delete((req, res) => {
       const threadId = req.body.thread_id;
       const password = req.body.delete_password;
+
+      if (!hexTest(threadId)) {
+        return res.send("incorrect id format");
+      }
 
       // first find the thread in the db so passwords can be compared
       Thread.findOne({ _id: ObjectId(threadId) }, (err, thread) => {
@@ -104,6 +130,10 @@ module.exports = function(app) {
     .get((req, res) => {
       const threadId = req.query.thread_id;
 
+      if (!hexTest(threadId)) {
+        return res.send("incorrect id format");
+      }
+
       Thread.find(
         { _id: ObjectId(threadId) },
         "-reported -delete_password",
@@ -119,6 +149,10 @@ module.exports = function(app) {
       const threadId = req.body.thread_id;
       const text = req.body.text;
       const password = req.body.delete_password;
+
+      if (!hexTest(threadId)) {
+        return res.send("incorrect id format");
+      }
 
       // create new reply
       const reply = new Reply({
@@ -143,6 +177,10 @@ module.exports = function(app) {
       const threadId = req.body.thread_id;
       const replyId = req.body.reply_id;
 
+      if (!hexTest(threadId) || !hexText(replyId)) {
+        return res.send("incorrect id format");
+      }
+
       Thread.findOneAndUpdate(
         {
           _id: ObjectId(threadId),
@@ -166,6 +204,10 @@ module.exports = function(app) {
       const threadId = req.body.thread_id;
       const replyId = req.body.reply_id;
       const password = req.body.delete_password;
+
+      if (!hexTest(threadId) || !hexText(replyId)) {
+        return res.send("incorrect id format");
+      }
 
       // first find the thread
       Thread.findOneAndUpdate(
