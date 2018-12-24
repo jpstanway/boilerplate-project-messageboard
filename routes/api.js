@@ -136,7 +136,12 @@ module.exports = function(app) {
 
       Thread.find(
         { _id: ObjectId(threadId) },
-        "-reported -delete_password",
+        {
+          reported: 0,
+          delete_password: 0,
+          "replies.reported": 0,
+          "replies.delete_password": 0
+        },
         (err, data) => {
           if (err) return res.send("Failed to retrieve thread results");
 
