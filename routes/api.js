@@ -149,26 +149,42 @@ module.exports = function(app) {
       const threadId = req.body.thread_id;
       const text = req.body.text;
       const password = req.body.delete_password;
+      const replyId = req.body.reply_id; // for testing only
 
       if (!hexTest(threadId)) {
         return res.send("incorrect id format");
       }
 
       // create new reply
-      const reply = new Reply({
+      let reply = new Reply({
+        _id: replyId || ObjectId(),
         text: text,
         delete_password: password
       });
 
-      Thread.updateOne(
-        { _id: ObjectId(threadId) },
+      // check for reply (for testing)
+      Thread.find(
         {
-          bumped_on: new Date(),
-          $push: { replies: reply }
+          _id: ObjectId(threadId),
+          replies: {
+            $elemMatch: { _id: ObjectId(replyId) }
+          }
         },
         (err, data) => {
-          if (err) return res.send("Failed to update thread");
-
+          if (err) {
+            return res.send("Error searching database");
+          } else if (data.length === 0) {
+            Thread.updateOne(
+              { _id: ObjectId(threadId) },
+              {
+                bumped_on: new Date(),
+                $push: { replies: reply }
+              },
+              (err, data) => {
+                if (err) return res.send("Failed to update thread");
+              }
+            );
+          }
           res.redirect(`/b/${board}/${threadId}`);
         }
       );
@@ -177,7 +193,7 @@ module.exports = function(app) {
       const threadId = req.body.thread_id;
       const replyId = req.body.reply_id;
 
-      if (!hexTest(threadId) || !hexText(replyId)) {
+      if (!hexTest(threadId) || !hexTest(replyId)) {
         return res.send("incorrect id format");
       }
 
@@ -205,7 +221,7 @@ module.exports = function(app) {
       const replyId = req.body.reply_id;
       const password = req.body.delete_password;
 
-      if (!hexTest(threadId) || !hexText(replyId)) {
+      if (!hexTest(threadId) || !hexTest(replyId)) {
         return res.send("incorrect id format");
       }
 
