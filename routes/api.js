@@ -14,7 +14,6 @@ const ObjectId = require("mongodb").ObjectId;
 const CONNECTION = process.env.DB;
 
 module.exports = function(app) {
-  // THREAD ROUTE
   app
     .route("/api/threads/:board")
     .post((req, res) => {
@@ -32,7 +31,7 @@ module.exports = function(app) {
           // create and save new thread
           db.collection(board).insert(
             {
-              _id: id || ObjectId(),
+              _id: ObjectId(id) || ObjectId(),
               text: text,
               created_on: new Date(),
               bumped_on: new Date(),
@@ -44,7 +43,7 @@ module.exports = function(app) {
               if (err)
                 return res.status(400).send("Failed to save to database");
 
-              res.redirect(`/b/${board}`);
+              res.redirect(`/b/${board}/`);
             }
           );
         }
@@ -118,7 +117,6 @@ module.exports = function(app) {
       );
     });
 
-  // REPLY ROUTE
   app
     .route("/api/replies/:board")
     .post((req, res) => {

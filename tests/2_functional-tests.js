@@ -6,10 +6,10 @@
  *       (if additional are added, keep them at the very end!)
  */
 
-const chaiHttp = require("chai-http");
-const chai = require("chai");
-const assert = chai.assert;
-const server = require("../server");
+var chaiHttp = require("chai-http");
+var chai = require("chai");
+var assert = chai.assert;
+var server = require("../server");
 
 chai.use(chaiHttp);
 
