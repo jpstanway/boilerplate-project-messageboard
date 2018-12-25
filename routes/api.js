@@ -18,6 +18,7 @@ module.exports = function(app) {
   app
     .route("/api/threads/:board")
     .post((req, res) => {
+      expect(req.body).to.be.an("object");
       const board = req.body.board;
       const text = req.body.text;
       const password = req.body.delete_password;
@@ -70,6 +71,7 @@ module.exports = function(app) {
       );
     })
     .delete((req, res) => {
+      expect(req.body).to.be.an("object");
       const board = req.body.board;
       const threadId = req.body.thread_id;
       const password = req.body.delete_password;
@@ -96,6 +98,7 @@ module.exports = function(app) {
       );
     })
     .put((req, res) => {
+      expect(req.body).to.be.an("object");
       const board = req.body.board;
       const threadId = req.body.thread_id;
 
@@ -119,6 +122,7 @@ module.exports = function(app) {
   app
     .route("/api/replies/:board")
     .post((req, res) => {
+      expect(req.body).to.be.an("object");
       const board = req.body.board;
       const threadId = req.body.thread_id;
       const text = req.body.text;
@@ -126,7 +130,7 @@ module.exports = function(app) {
       const replyId = req.body.reply_id; // for testing only
 
       const reply = {
-        _id: replyId || ObjectId(),
+        _id: ObjectId(replyId) || ObjectId(),
         text: text,
         created_on: new Date(),
         reported: false,
@@ -176,6 +180,7 @@ module.exports = function(app) {
       );
     })
     .put((req, res) => {
+      expect(req.body).to.be.an("object");
       const board = req.body.board;
       const threadId = req.body.thread_id;
       const replyId = req.body.reply_id;
@@ -201,6 +206,7 @@ module.exports = function(app) {
       );
     })
     .delete((req, res) => {
+      expect(req.body).to.be.an("object");
       const board = req.body.board;
       const threadId = req.body.thread_id;
       const replyId = req.body.reply_id;

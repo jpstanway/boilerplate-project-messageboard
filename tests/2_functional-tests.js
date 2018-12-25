@@ -6,10 +6,10 @@
  *       (if additional are added, keep them at the very end!)
  */
 
-var chaiHttp = require("chai-http");
-var chai = require("chai");
-var assert = chai.assert;
-var server = require("../server");
+const chaiHttp = require("chai-http");
+const chai = require("chai");
+const assert = chai.assert;
+const server = require("../server");
 
 chai.use(chaiHttp);
 
@@ -101,12 +101,86 @@ suite("Functional Tests", function() {
   });
 
   suite("API ROUTING FOR /api/replies/:board", function() {
-    test("POST", function() {});
+    test("POST", function(done) {
+      chai
+        .request(server)
+        .post("/api/replies/test")
+        .send({
+          board: "test",
+          thread_id: "5c229a2c0d73fe03d06c0663",
+          text: "testing reply route",
+          delete_password: "123456",
+          reply_id: "5c229ce59c7e4e10a3bea99e"
+        })
+        .end((err, res) => {
+          if (err) return done(err);
+          assert.equal(res.status, 200);
+          assert.isAbove(res.redirects.length, 0, "Page should be redirected");
+          done(null, res);
+        });
+    });
 
-    test("GET", function() {});
+    test("GET", function(done) {
+      chai
+        .request(server)
+        .get("/api/replies/test?thread_id=5c229a2c0d73fe03d06c0663")
+        .end((err, res) => {
+          if (err) return done(err);
+          assert.equal(res.status, 200);
+          assert.property(res.body, "_id", "Thread should contain ID");
+          assert.property(res.body, "text", "Thread should contain text");
+          assert.property(
+            res.body,
+            "created_on",
+            "Thread should contain created on date"
+          );
+          assert.property(
+            res.body,
+            "bumped_on",
+            "Thread should contain bumped on date"
+          );
+          assert.property(
+            res.body,
+            "replies",
+            "Thread should contain replies array"
+          );
+          done(null, res);
+        });
+    });
 
-    test("PUT", function() {});
+    test("PUT", function(done) {
+      chai
+        .request(server)
+        .put("/api/replies/test")
+        .send({
+          board: "test",
+          thread_id: "5c229a2c0d73fe03d06c0663",
+          reply_id: "5c229ce59c7e4e10a3bea99e"
+        })
+        .end((err, res) => {
+          if (err) return done(err);
+          assert.equal(res.status, 200);
+          assert.equal(res.body, "success");
+          done(null, res);
+        });
+    });
 
-    test("DELETE", function() {});
+    test("DELETE", function(done) {
+      chai
+        .request(server)
+        .delete("/api/replies/test")
+        .send({
+          board: "test",
+          thread_id: "5c229a2c0d73fe03d06c0663",
+          reply_id: "5c229ce59c7e4e10a3bea99e",
+          delete_password: "123456"
+        })
+        .end((err, res) => {
+          if (err) return done(err);
+          assert.equal(res.status, 200);
+          assert.equal(res.body, "success");
+          done(null, res);
+        });
+    });
   });
 });
